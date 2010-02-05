@@ -1,6 +1,6 @@
 
 TARGET = text-search
-OBJS = text-search.o SFMT.o sauto.o poor.o
+OBJS = text-search.o SFMT.o sauto.o poor.o sarray.o
 
 CC ?= gcc
 CFLAGS += -g -Wall
