@@ -22,6 +22,7 @@ def parse_args(argv)
 end
 
 def main(argv)
+  `make`
   opt = parse_args(argv)
 
   data_file = if opt[:data_file]
