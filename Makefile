@@ -1,6 +1,6 @@
 
 TARGET = text-search
-OBJS = text-search.o
+OBJS = text-search.o sauto.o
 
 CC ?= gcc
 CFLAGS ?= -g -Wall
