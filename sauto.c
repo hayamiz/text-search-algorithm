@@ -36,7 +36,7 @@ static sauto_state_t *
 sauto_state_new(sauto_t *sauto)
 {
     sauto_state_t *newstate;
-    gint64 idx;
+    gint idx;
 
     newstate = g_malloc(sizeof(sauto_state_t));
     newstate->suffix_link = NULL;
@@ -64,8 +64,8 @@ sauto_new(const gchar *string)
     sauto_state_t *v;
     sauto_tran_t  *v_edge;
     sauto_tran_t  *u;
-    gint64 len;
-    gint64 i;
+    gint len;
+    gint i;
     gint   j;
     gchar c;
 
@@ -141,7 +141,7 @@ sauto_new(const gchar *string)
 void
 sauto_delete(sauto_t *sauto)
 {
-    gint64 i;
+    gint i;
     sauto_state_t *state;
 
     for(i = 0;i < sauto->num_states;i++){
@@ -156,11 +156,31 @@ sauto_delete(sauto_t *sauto)
     return;
 }
 
-gboolean
-sauto_find(sauto_t *sauto, const gchar *key)
+gint
+sauto_search(sauto_t *sauto, const gchar *key)
 {
+    sauto_state_t *state;
+    gint i, j;
+    gint len;
 
-    return FALSE;
+    len = strlen(key);
+    state = sauto->states[0];
+
+    if (sauto->num_states <= 1) {
+        return -1;
+    }
+
+    for(i = 0;i < len;i++) {
+        for(j = 0;j < state->num_children;j++) {
+            if (state->children[j].label == key[i]) {
+                state = state->children[j].state;
+            } else {
+                return -1;
+            }
+        }
+    }
+    
+    return state->end_pos - len;
 }
 
 void
@@ -169,8 +189,8 @@ sauto_graphviz(FILE *out, sauto_t *sauto)
     sauto_state_t *root;
     sauto_state_t *state;
     sauto_tran_t *child;
-    gint64 i;
-    gint   j;
+    gint i;
+    gint j;
 
     root = sauto->states[0];
     fprintf(out, "digraph suffix_automaton {\n");
@@ -180,13 +200,13 @@ sauto_graphviz(FILE *out, sauto_t *sauto)
         for(j = 0;j < state->num_children;j++){
             child = &state->children[j];
             if (child->solid == TRUE) {
-                fprintf(out, "\"%lld@%lld\" -> \"%lld@%lld\""
+                fprintf(out, "\"%d@%d\" -> \"%d@%d\""
                         " [label = \"%c\", style = bold, weight = 5];\n",
                         state->id, state->end_pos,
                         child->state->id, child->state->end_pos,
                         child->label);
             } else {
-                fprintf(out, "\"%lld@%lld\" -> \"%lld@%lld\""
+                fprintf(out, "\"%d@%d\" -> \"%d@%d\""
                         " [label = \"%c\", weight = 1];\n",
                         state->id, state->end_pos,
                         child->state->id, child->state->end_pos,
