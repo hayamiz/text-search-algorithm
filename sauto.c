@@ -171,13 +171,13 @@ sauto_search(sauto_t *sauto, const gchar *key)
         for(j = 0;j < state->num_children;j++) {
             if (state->children[j].label == key[i]) {
                 state = state->children[j].state;
-            } else {
-                return -1;
+                break;
             }
         }
         if (prev_state == state) {
             return -1;
         }
+        prev_state = state;
     }
     
     return state->end_pos - len;

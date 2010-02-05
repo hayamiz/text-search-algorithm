@@ -46,11 +46,38 @@ def main(argv)
   
   data_file.puts() # data dalimiter
 
-  keystr_len_set = (3..18).map{|pow| 1 << pow}
+  # ensure key existence
+  searchstr_len_set = (10..24).map{|pow| 1 << pow}
+  keystr_len = 8
+  data_file.puts(`#{opt[:command]} -v -n 0`.split("\n").first) # print labels
+  searchstr_len_set.each do |len|
+    command = "#{opt[:command]} -e -n #{len} -m #{keystr_len}"
+    puts "Running command: #{command}"
+    IO.popen(command) do |io|
+      data_file.puts(io.read)
+    end
+  end
+  
+  data_file.puts() # data dalimiter
+
+  keystr_len_set = (3..20).map{|pow| 1 << pow}
   searchstr_len = 1 << 20
   data_file.puts(`#{opt[:command]} -v -n 0`.split("\n").first) # print labels
   keystr_len_set.each do |len|
     command = "#{opt[:command]} -n #{searchstr_len} -m #{len}"
+    puts "Running command: #{command}"
+    IO.popen(command) do |io|
+      data_file.puts(io.read)
+    end
+  end
+  
+  # ensure key existence
+  data_file.puts() # data dalimiter
+  keystr_len_set = (3..20).map{|pow| 1 << pow}
+  searchstr_len = 1 << 20
+  data_file.puts(`#{opt[:command]} -v -n 0`.split("\n").first) # print labels
+  keystr_len_set.each do |len|
+    command = "#{opt[:command]} -e -n #{searchstr_len} -m #{len}"
     puts "Running command: #{command}"
     IO.popen(command) do |io|
       data_file.puts(io.read)

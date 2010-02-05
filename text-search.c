@@ -56,7 +56,7 @@ generate_key(const gchar *str, gint length)
     str_len = strlen(str);
     idx = rand() % (str_len - length + 1);
     ret = g_malloc(sizeof(gchar) * (length + 1));
-    memcpy((gpointer) ret, (gpointer) str, sizeof(gchar) * length);
+    memcpy((gpointer) ret, (gpointer) str + idx, sizeof(gchar) * length);
     ret[length] = '\0';
 
     return ret;
