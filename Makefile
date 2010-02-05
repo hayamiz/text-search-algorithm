@@ -3,7 +3,7 @@ TARGET = text-search
 OBJS = text-search.o SFMT.o sauto.o poor.o
 
 CC ?= gcc
-CFLAGS ?= -g -Wall
+CFLAGS += -g -Wall
 CFLAGS += $(shell pkg-config --cflags glib-2.0)
 LDFLAGS += -lm $(shell pkg-config --libs glib-2.0)
 SFMT_CFLAGS = $(CFLAGS)

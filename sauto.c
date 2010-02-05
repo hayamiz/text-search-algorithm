@@ -160,15 +160,12 @@ gint
 sauto_search(sauto_t *sauto, const gchar *key)
 {
     sauto_state_t *state;
+    sauto_state_t *prev_state;
     gint i, j;
     gint len;
 
     len = strlen(key);
-    state = sauto->states[0];
-
-    if (sauto->num_states <= 1) {
-        return -1;
-    }
+    prev_state = state = sauto->states[0];
 
     for(i = 0;i < len;i++) {
         for(j = 0;j < state->num_children;j++) {
@@ -177,6 +174,9 @@ sauto_search(sauto_t *sauto, const gchar *key)
             } else {
                 return -1;
             }
+        }
+        if (prev_state == state) {
+            return -1;
         }
     }
     

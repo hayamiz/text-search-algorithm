@@ -184,7 +184,23 @@ main(gint argc, gchar **argv)
     init_gen_rand(option.seed);
     srand(option.seed);
 
+    if (option.verbose == TRUE) {
+        g_print("# "
+                "searchstr_len\t"
+                "keystr_len\t"
+                "poor_search_avg(sec)\t"
+                "poor_search_err(sec)\t"
+                "sauto_index_avg(sec)\t"
+                "sauto_index_err(sec)\t"
+                "sauto_search_avg(sec)\t"
+                "sauto_search_err(sec)\t"
+                "\n");
+    }
+
     randnums_size = option.searchstr_len;
+    if (option.keystr_len > randnums_size) {
+        return 0;
+    }
     randnums_size += (4 - randnums_size % 4);
     g_assert(randnums_size >= option.searchstr_len);
     if (0 != posix_memalign((gpointer *)&randnums,
@@ -225,19 +241,7 @@ main(gint argc, gchar **argv)
         g_free((gpointer) str);
         g_free((gpointer) key);
     }
-
-    if (option.verbose == TRUE) {
-        g_print("# "
-                "searchstr_len\t"
-                "keystr_len\t"
-                "poor_search_avg(sec)\t"
-                "poor_search_err(sec)\t"
-                "sauto_index_avg(sec)\t"
-                "sauto_index_err(sec)\t"
-                "sauto_search_avg(sec)\t"
-                "sauto_search_err(sec)\t"
-                "\n");
-    }
+    
     g_print("%d\t%d\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t"
             "\n",
             option.searchstr_len, option.keystr_len,
