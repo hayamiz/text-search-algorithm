@@ -22,8 +22,8 @@ def parse_args(argv)
 end
 
 def main(argv)
-  # ENV['CFLAGS'] = '-O3 -DG_DISABLE_ASSERT'
-  ENV['CFLAGS'] = '-O3'
+  ENV['CFLAGS'] = '-O3 -DG_DISABLE_ASSERT'
+  # ENV['CFLAGS'] = '-O3'
   puts `make clean`
   puts `make`
   opt = parse_args(argv)
@@ -34,7 +34,7 @@ def main(argv)
                 Tempfile.new("text-search")
               end
 
-  searchstr_len_set = (10..22).map{|pow| 1 << pow}
+  searchstr_len_set = (10..24).map{|pow| 1 << pow}
   keystr_len = 8
   data_file.puts(`#{opt[:command]} -v -n 0`.split("\n").first) # print labels
   searchstr_len_set.each do |len|
@@ -46,7 +46,8 @@ def main(argv)
     data_file.flush()
   end
   
-  data_file.puts() # data dalimiter
+  data_file.puts() # data delimiter
+  data_file.puts() # data delimiter
 
   # ensure key existence
   searchstr_len_set = (10..24).map{|pow| 1 << pow}
@@ -61,7 +62,8 @@ def main(argv)
     data_file.flush()
   end
   
-  data_file.puts() # data dalimiter
+  data_file.puts() # data delimiter
+  data_file.puts() # data delimiter
 
   keystr_len_set = (3..20).map{|pow| 1 << pow}
   searchstr_len = 1 << 20
@@ -75,9 +77,10 @@ def main(argv)
     data_file.flush()
   end
   
-  # ensure key existence
-  data_file.puts() # data dalimiter
+  data_file.puts() # data delimiter
+  data_file.puts() # data delimiter
 
+  # ensure key existence
   keystr_len_set = (3..20).map{|pow| 1 << pow}
   searchstr_len = 1 << 20
   data_file.puts(`#{opt[:command]} -v -n 0`.split("\n").first) # print labels
