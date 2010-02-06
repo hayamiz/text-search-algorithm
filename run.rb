@@ -125,6 +125,16 @@ def main(argv)
     end
     data_file.flush()
   end
+
+  data_file.puts() # data delimiter
+  data_file.puts() # data delimiter
+
+  command = "#{opt[:command]} -v -a check-tran-hist"
+  puts "Running command: #{command}"
+  IO.popen(command) do |io|
+    data_file.puts(io.read)
+  end
+  data_file.flush()
   
   data_file.fsync
   data_file.close

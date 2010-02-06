@@ -62,7 +62,7 @@ generate_key(const gchar *str, gint length)
     return ret;
 }
 
-void
+gint
 parse_args(int argc, char **argv, option_t *option)
 {
     // default values
@@ -84,6 +84,10 @@ parse_args(int argc, char **argv, option_t *option)
                 option->action = CHECK_SIZE;
             } else if (strcmp(optarg, "check-tran") == 0){
                 option->action = CHECK_TRAN;
+            } else if (strcmp(optarg, "check-tran-hist") == 0){
+                option->action = CHECK_TRAN_HIST;
+            } else if (strcmp(optarg, "graphviz") == 0){
+                option->action = GRAPHVIZ;
             }
             break;
         case 't':
@@ -119,7 +123,7 @@ parse_args(int argc, char **argv, option_t *option)
         }
     }
     
-    return;
+    return optind;
 argument_error:
     
     print_help();
@@ -132,7 +136,7 @@ print_help(void)
     g_print("Usage: text-search [options]\n\
 \n\
 Options:\n\
-	-a ACTION	Action: search(default), check-size, check-tran\n                           \
+	-a ACTION	Action: search(default), check-size, check-tran, check-tran-hist, graphviz\n\
 	-m NUM		Length of key string (default: 32)\n\
 	-n NUM		Length of search target string (default: 1024)\n\
 	-e		Constraint: search for existing key\n\
@@ -386,12 +390,71 @@ action_check_tran(option_t *option)
     g_free(sauto_tran_ret);
 }
 
+void
+action_check_tran_hist(option_t *option)
+{
+    sauto_t *sauto;
+    gint i;
+    gint *sauto10_hist;
+    gint *sauto20_hist;
+    gint *sauto22_hist;
+
+    const gchar *str;
+
+    free(randnums);
+    randnums_size = 1 << 22;
+    if (0 != posix_memalign((gpointer *)&randnums,
+                            16, sizeof(guint32) * randnums_size)) {
+        perror("cannot allocate memory");
+        exit(errno);
+    }
+
+    if (option->verbose == TRUE) {
+        g_print("# tran_num\tcount(N=2**10)\tcount(N=2**20)\tcount(N=2**22)"
+                "\n");
+    }
+
+    str = generate_string(1 << 10);
+    sauto = sauto_new(str);
+    sauto10_hist = sauto_tran_hist(sauto);
+    sauto_delete(sauto);
+    
+    str = generate_string(1 << 20);
+    sauto = sauto_new(str);
+    sauto20_hist = sauto_tran_hist(sauto);
+    sauto_delete(sauto);
+    
+    str = generate_string(1 << 22);
+    sauto = sauto_new(str);
+    sauto22_hist = sauto_tran_hist(sauto);
+    sauto_delete(sauto);
+
+    for(i = 1;i < 129;i++){
+        g_print("%d\t%d\t%d\t%d\n",
+                i, sauto10_hist[i], sauto20_hist[i], sauto22_hist[i]);
+    }
+
+    g_free(sauto10_hist);
+    g_free(sauto20_hist);
+    g_free(sauto22_hist);
+}
+
+void
+action_graphviz(option_t *option, gint idx, gchar **argv)
+{
+    sauto_t *sauto;
+    sauto = sauto_new(argv[idx]);
+    sauto_graphviz(stdout, sauto);
+    sauto_delete(sauto);
+}
+
 gint
 main(gint argc, gchar **argv)
 {
     option_t option;
+    gint argv_idx;
 
-    parse_args(argc, argv, &option);
+    argv_idx = parse_args(argc, argv, &option);
     init_gen_rand(option.seed);
     srand(option.seed);
 
@@ -416,6 +479,12 @@ main(gint argc, gchar **argv)
         break;
     case CHECK_TRAN:
         action_check_tran(&option);
+        break;
+    case CHECK_TRAN_HIST:
+        action_check_tran_hist(&option);
+        break;
+    case GRAPHVIZ:
+        action_graphviz(&option, argv_idx, argv);
         break;
     }
 

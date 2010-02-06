@@ -194,22 +194,20 @@ sauto_graphviz(FILE *out, sauto_t *sauto)
 
     root = sauto->states[0];
     fprintf(out, "digraph suffix_automaton {\n");
-    fprintf(out, "graph [rankdir = LR];\n");
+    fprintf(out, "graph [rankdir = LR, size = \"8.0, 8.0\"];\n");
+    fprintf(out, "node [shape = box];\n");
     for(i = 0;i < sauto->num_states;i++){
         state = sauto->states[i];
         for(j = 0;j < state->num_children;j++){
             child = &state->children[j];
+            fprintf(out, "\"s%d\\nend@%d\" -> \"s%d\\nend@%d\"",
+                    state->id, state->end_pos,
+                    child->state->id, child->state->end_pos);
             if (child->solid == TRUE) {
-                fprintf(out, "\"%d@%d\" -> \"%d@%d\""
-                        " [label = \"%c\", style = bold, weight = 5];\n",
-                        state->id, state->end_pos,
-                        child->state->id, child->state->end_pos,
+                fprintf(out, " [label = \"%c\", style = bold, weight = 5];\n",
                         child->label);
             } else {
-                fprintf(out, "\"%d@%d\" -> \"%d@%d\""
-                        " [label = \"%c\", weight = 1];\n",
-                        state->id, state->end_pos,
-                        child->state->id, child->state->end_pos,
+                fprintf(out, " [label = \"%c\", weight = 1];\n",
                         child->label);
             }
         }
@@ -245,6 +243,23 @@ sauto_avg_tran(sauto_t *sauto)
         ret += sauto->states[i]->num_children;
     }
     ret /= sauto->num_states;
+
+    return ret;
+}
+
+gint *
+sauto_tran_hist(sauto_t *sauto)
+{
+    gint *ret;
+    gint i;
+    ret = g_malloc(sizeof(gint) * 129);
+    memset(ret, 0, sizeof(gint) * 129);
+
+    for(i = 0;i < sauto->num_states;i++){
+        g_assert(sauto->states[i]->num_children >= 0);
+        g_assert(sauto->states[i]->num_children <= 128);
+        ret[sauto->states[i]->num_children]++;
+    }
 
     return ret;
 }

@@ -17,6 +17,8 @@ typedef enum {
     SEARCH,
     CHECK_SIZE,
     CHECK_TRAN,
+    CHECK_TRAN_HIST,
+    GRAPHVIZ,
 } action_t;
 
 typedef struct option_rec {
@@ -67,6 +69,7 @@ gint sauto_search(sauto_t *sauto, const gchar *key);
 void sauto_graphviz(FILE *out, sauto_t *sauto);
 gint sauto_size(sauto_t *sauto);
 gdouble sauto_avg_tran(sauto_t *sauto);
+gint *sauto_tran_hist(sauto_t *sauto);
 
 sarray_t *sarray_new(const gchar *string);
 void sarray_delete(sarray_t *sarray);
