@@ -45,6 +45,11 @@ typedef struct suffix_automaton_rec {
     sauto_state_t **states; // 0th state is the root
 } sauto_t;
 
+typedef struct suffix_array_rec {
+    const gchar *str;
+    gint str_len;
+    gchar **array;
+} sarray_t;
 
 gint poor_search(const gchar *str, const gchar *key);
 
@@ -52,5 +57,9 @@ sauto_t *sauto_new(const gchar *string);
 void sauto_delete(sauto_t *sauto);
 gint sauto_search(sauto_t *sauto, const gchar *key);
 void sauto_graphviz(FILE *out, sauto_t *sauto);
+
+sarray_t *sarray_new(const gchar *string);
+void sarray_delete(sarray_t *sarray);
+gint sarray_search(sarray_t *sarray, const gchar *key);
 
 #endif

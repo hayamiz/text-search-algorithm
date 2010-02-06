@@ -174,11 +174,15 @@ main(gint argc, gchar **argv)
     gdouble *poor_search_ret;
     gdouble *sauto_index_ret;
     gdouble *sauto_search_ret;
+    gdouble *sarray_index_ret;
+    gdouble *sarray_search_ret;
 
     sauto_t *sauto;
+    sarray_t *sarray;
 
     gint poor_pos;
     gint sauto_pos;
+    gint sarray_pos;
 
     parse_args(argc, argv, &option);
     init_gen_rand(option.seed);
@@ -194,6 +198,10 @@ main(gint argc, gchar **argv)
                 "sauto_index_err(sec)\t"
                 "sauto_search_avg(sec)\t"
                 "sauto_search_err(sec)\t"
+                "sarray_index_avg(sec)\t"
+                "sarray_index_err(sec)\t"
+                "sarray_search_avg(sec)\t"
+                "sarray_search_err(sec)\t"
                 "\n");
     }
 
@@ -212,6 +220,8 @@ main(gint argc, gchar **argv)
     poor_search_ret  = g_malloc(sizeof(gdouble) * option.trial_num);
     sauto_index_ret  = g_malloc(sizeof(gdouble) * option.trial_num);
     sauto_search_ret = g_malloc(sizeof(gdouble) * option.trial_num);
+    sarray_index_ret  = g_malloc(sizeof(gdouble) * option.trial_num);
+    sarray_search_ret = g_malloc(sizeof(gdouble) * option.trial_num);
 
     for(i = 0;i < option.trial_num;i++) {
         str = generate_string(option.searchstr_len);
@@ -230,19 +240,23 @@ main(gint argc, gchar **argv)
                 g_printerr("key: %s\n", key);
             }
         }
+        poor_search_ret[i]  = TIME(poor_pos = poor_search(str, key));
         sauto_index_ret[i]  = TIME(sauto = sauto_new(str));
         sauto_search_ret[i] = TIME(sauto_pos = sauto_search(sauto, key));
-        poor_search_ret[i]  = TIME(poor_pos = poor_search(str, key));
+        sarray_index_ret[i]  = TIME(sarray = sarray_new(str));
+        sarray_search_ret[i] = TIME(sarray_pos = sarray_search(sarray, key));
 
         g_assert(poor_pos == sauto_pos);
+        g_assert(poor_pos == sarray_pos);
         g_assert(option.existing_key == FALSE || poor_pos >= 0);
         
         sauto_delete(sauto);
+        sarray_delete(sarray);
         g_free((gpointer) str);
         g_free((gpointer) key);
     }
     
-    g_print("%d\t%d\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t"
+    g_print("%d\t%d\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t"
             "\n",
             option.searchstr_len, option.keystr_len,
             average(poor_search_ret, option.trial_num),
@@ -250,12 +264,18 @@ main(gint argc, gchar **argv)
             average(sauto_index_ret, option.trial_num),
             error  (sauto_index_ret, option.trial_num),
             average(sauto_search_ret, option.trial_num),
-            error  (sauto_search_ret, option.trial_num)
+            error  (sauto_search_ret, option.trial_num),
+            average(sarray_index_ret, option.trial_num),
+            error  (sarray_index_ret, option.trial_num),
+            average(sarray_search_ret, option.trial_num),
+            error  (sarray_search_ret, option.trial_num)
         );
 
     g_free(poor_search_ret);
     g_free(sauto_index_ret);
     g_free(sauto_search_ret);
+    g_free(sarray_index_ret);
+    g_free(sarray_search_ret);
     free(randnums);
 
     return 0;
