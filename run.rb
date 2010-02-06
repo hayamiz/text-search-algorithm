@@ -17,6 +17,16 @@ def parse_args(argv)
     opt[:data_file] = file
   end
 
+  opt[:trial_num] = 10
+  parser.on('-t', '--trial-num NUM') do |num|
+    opt[:trial_num] = num.to_i
+  end
+
+  opt[:search_num] = 1000
+  parser.on('-T', '--search-num NUM') do |num|
+    opt[:search_num] = num.to_i
+  end
+
   parser.parse!(argv)
   opt
 end
@@ -28,17 +38,20 @@ def main(argv)
   puts `make`
   opt = parse_args(argv)
 
+  searchstr_len_set = (10..24).map{|pow| 1 << pow}
+  keystr_len_set = (3..20).map{|pow| 1 << pow}
+  searchstr_len = 1 << 20
+
   data_file = if opt[:data_file]
                 File.open(opt[:data_file], "w")
               else
                 Tempfile.new("text-search")
               end
 
-  searchstr_len_set = (10..24).map{|pow| 1 << pow}
   keystr_len = 32
-  data_file.puts(`#{opt[:command]} -v -n 0`.split("\n").first) # print labels
+  data_file.puts(`#{opt[:command]} -v -n 0`.lines.first) # print labels
   searchstr_len_set.each do |len|
-    command = "#{opt[:command]} -n #{len} -m #{keystr_len}"
+    command = "#{opt[:command]} -t #{opt[:trial_num]} -T #{opt[:search_num]} -n #{len} -m #{keystr_len}"
     puts "Running command: #{command}"
     IO.popen(command) do |io|
       data_file.puts(io.read)
@@ -50,11 +63,9 @@ def main(argv)
   data_file.puts() # data delimiter
 
   # ensure key existence
-  searchstr_len_set = (10..24).map{|pow| 1 << pow}
-  keystr_len = 32
-  data_file.puts(`#{opt[:command]} -v -n 0`.split("\n").first) # print labels
+  data_file.puts(`#{opt[:command]} -v -n 0`.lines.first) # print labels
   searchstr_len_set.each do |len|
-    command = "#{opt[:command]} -e -n #{len} -m #{keystr_len}"
+    command = "#{opt[:command]} -t #{opt[:trial_num]} -T #{opt[:search_num]} -e -n #{len} -m #{keystr_len}"
     puts "Running command: #{command}"
     IO.popen(command) do |io|
       data_file.puts(io.read)
@@ -65,11 +76,9 @@ def main(argv)
   data_file.puts() # data delimiter
   data_file.puts() # data delimiter
 
-  keystr_len_set = (3..20).map{|pow| 1 << pow}
-  searchstr_len = 1 << 20
-  data_file.puts(`#{opt[:command]} -v -n 0`.split("\n").first) # print labels
+  data_file.puts(`#{opt[:command]} -v -n 0`.lines.first) # print labels
   keystr_len_set.each do |len|
-    command = "#{opt[:command]} -n #{searchstr_len} -m #{len}"
+    command = "#{opt[:command]} -t #{opt[:trial_num]} -T #{opt[:search_num]} -n #{searchstr_len} -m #{len}"
     puts "Running command: #{command}"
     IO.popen(command) do |io|
       data_file.puts(io.read)
@@ -81,11 +90,35 @@ def main(argv)
   data_file.puts() # data delimiter
 
   # ensure key existence
-  keystr_len_set = (3..20).map{|pow| 1 << pow}
-  searchstr_len = 1 << 20
-  data_file.puts(`#{opt[:command]} -v -n 0`.split("\n").first) # print labels
+  data_file.puts(`#{opt[:command]} -v -n 0`.lines.first) # print labels
   keystr_len_set.each do |len|
-    command = "#{opt[:command]} -e -n #{searchstr_len} -m #{len}"
+    command = "#{opt[:command]} -t #{opt[:trial_num]} -T #{opt[:search_num]} -e -n #{searchstr_len} -m #{len}"
+    puts "Running command: #{command}"
+    IO.popen(command) do |io|
+      data_file.puts(io.read)
+    end
+    data_file.flush()
+  end
+
+  data_file.puts() # data delimiter
+  data_file.puts() # data delimiter
+  
+  data_file.puts(`#{opt[:command]} -a check-size -v -n 0`.lines.first) # print labels
+  searchstr_len_set.each do |len|
+    command = "#{opt[:command]} -a check-size -t #{opt[:trial_num]} -T #{opt[:search_num]} -n #{len} -m #{keystr_len}"
+    puts "Running command: #{command}"
+    IO.popen(command) do |io|
+      data_file.puts(io.read)
+    end
+    data_file.flush()
+  end
+
+  data_file.puts() # data delimiter
+  data_file.puts() # data delimiter
+  
+  data_file.puts(`#{opt[:command]} -a check-tran -v -n 0`.lines.first) # print labels
+  searchstr_len_set.each do |len|
+    command = "#{opt[:command]} -a check-tran -t #{opt[:trial_num]} -T #{opt[:search_num]} -n #{len} -m #{keystr_len}"
     puts "Running command: #{command}"
     IO.popen(command) do |io|
       data_file.puts(io.read)

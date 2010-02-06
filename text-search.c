@@ -215,6 +215,10 @@ action_search(option_t *option)
                 "\n");
     }
 
+    if (option->searchstr_len == 0) {
+        return;
+    }
+
     poor_search_ret  = g_malloc(sizeof(gdouble) * option->trial_num);
     sauto_index_ret  = g_malloc(sizeof(gdouble) * option->trial_num);
     sauto_search_ret = g_malloc(sizeof(gdouble) * option->trial_num);
@@ -393,7 +397,7 @@ main(gint argc, gchar **argv)
 
     randnums_size = option.searchstr_len;
     if (option.keystr_len > randnums_size) {
-        return 0;
+        randnums_size = option.keystr_len;
     }
     randnums_size += (4 - randnums_size % 4);
     g_assert(randnums_size >= option.searchstr_len);
