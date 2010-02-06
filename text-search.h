@@ -13,6 +13,12 @@
 
 #include "SFMT/SFMT.h"
 
+typedef enum {
+    SEARCH,
+    CHECK_SIZE,
+    CHECK_TRAN,
+} action_t;
+
 typedef struct option_rec {
     gint trial_num;
     gint search_num;
@@ -22,6 +28,7 @@ typedef struct option_rec {
     gboolean existing_key;
     gboolean verbose;
     gboolean debug;
+    action_t action;
 } option_t;
 
 
@@ -58,9 +65,12 @@ sauto_t *sauto_new(const gchar *string);
 void sauto_delete(sauto_t *sauto);
 gint sauto_search(sauto_t *sauto, const gchar *key);
 void sauto_graphviz(FILE *out, sauto_t *sauto);
+gint sauto_size(sauto_t *sauto);
+gdouble sauto_avg_tran(sauto_t *sauto);
 
 sarray_t *sarray_new(const gchar *string);
 void sarray_delete(sarray_t *sarray);
 gint sarray_search(sarray_t *sarray, const gchar *key);
+gint sarray_size(sarray_t *sarray);
 
 #endif

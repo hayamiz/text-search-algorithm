@@ -66,6 +66,7 @@ void
 parse_args(int argc, char **argv, option_t *option)
 {
     // default values
+    option->action = SEARCH;
     option->trial_num = 10;
     option->search_num = 1000;
     option->keystr_len = 8;
@@ -76,8 +77,15 @@ parse_args(int argc, char **argv, option_t *option)
     option->debug = FALSE;
 
     char c;
-    while((c = getopt(argc, argv, "ht:T:m:n:evs:")) != -1) {
+    while((c = getopt(argc, argv, "a:ht:T:m:n:evs:")) != -1) {
         switch(c) {
+        case 'a':
+            if (strcmp(optarg, "check-size") == 0){
+                option->action = CHECK_SIZE;
+            } else if (strcmp(optarg, "check-tran") == 0){
+                option->action = CHECK_TRAN;
+            }
+            break;
         case 't':
             option->trial_num = atoi(optarg);
             break;
@@ -124,6 +132,7 @@ print_help(void)
     g_print("Usage: text-search [options]\n\
 \n\
 Options:\n\
+	-a ACTION	Action: search(default), check-size, check-tran\n                           \
 	-m NUM		Length of key string (default: 8)\n\
 	-n NUM		Length of search target string (default: 1024)\n\
 	-e		Constraint: search for existing key\n\
@@ -168,10 +177,9 @@ error(gdouble *data, gint length)
     return stddevi / sqrt((gdouble) length);
 }
 
-gint
-main(gint argc, gchar **argv)
+void
+action_search(option_t *option)
 {
-    option_t option;
     const gchar *str;
     gint i;
     gint j;
@@ -190,11 +198,7 @@ main(gint argc, gchar **argv)
     gint         *sauto_pos;
     gint         *sarray_pos;
 
-    parse_args(argc, argv, &option);
-    init_gen_rand(option.seed);
-    srand(option.seed);
-
-    if (option.verbose == TRUE) {
+    if (option->verbose == TRUE) {
         g_print("# "
                 "searchstr_len\t"
                 "keystr_len\t"
@@ -211,70 +215,58 @@ main(gint argc, gchar **argv)
                 "\n");
     }
 
-    randnums_size = option.searchstr_len;
-    if (option.keystr_len > randnums_size) {
-        return 0;
-    }
-    randnums_size += (4 - randnums_size % 4);
-    g_assert(randnums_size >= option.searchstr_len);
-    if (0 != posix_memalign((gpointer *)&randnums,
-                            16, sizeof(guint32) * randnums_size)) {
-        perror("cannot allocate memory");
-        exit(errno);
-    }
-    
-    poor_search_ret  = g_malloc(sizeof(gdouble) * option.trial_num);
-    sauto_index_ret  = g_malloc(sizeof(gdouble) * option.trial_num);
-    sauto_search_ret = g_malloc(sizeof(gdouble) * option.trial_num);
-    sarray_index_ret  = g_malloc(sizeof(gdouble) * option.trial_num);
-    sarray_search_ret = g_malloc(sizeof(gdouble) * option.trial_num);
+    poor_search_ret  = g_malloc(sizeof(gdouble) * option->trial_num);
+    sauto_index_ret  = g_malloc(sizeof(gdouble) * option->trial_num);
+    sauto_search_ret = g_malloc(sizeof(gdouble) * option->trial_num);
+    sarray_index_ret  = g_malloc(sizeof(gdouble) * option->trial_num);
+    sarray_search_ret = g_malloc(sizeof(gdouble) * option->trial_num);
 
-    keys = g_malloc(sizeof(gchar *) * option.search_num);
-    poor_pos = g_malloc(sizeof(gint) * option.search_num);
-    sauto_pos = g_malloc(sizeof(gint) * option.search_num);
-    sarray_pos = g_malloc(sizeof(gint) * option.search_num);
+    keys = g_malloc(sizeof(gchar *) * option->search_num);
+    poor_pos = g_malloc(sizeof(gint) * option->search_num);
+    sauto_pos = g_malloc(sizeof(gint) * option->search_num);
+    sarray_pos = g_malloc(sizeof(gint) * option->search_num);
 
-    for(i = 0;i < option.trial_num;i++) {
-        str = generate_string(option.searchstr_len);
-        for(j = 0;j < option.search_num;j++){
-            keys[j] = generate_key((option.existing_key == TRUE?
+    for(i = 0;i < option->trial_num;i++) {
+        str = generate_string(option->searchstr_len);
+        for(j = 0;j < option->search_num;j++){
+            keys[j] = generate_key((option->existing_key == TRUE?
                                     str : NULL),
-                                   option.keystr_len);
+                                   option->keystr_len);
         }
-        if (option.debug == TRUE) {
-            if (option.searchstr_len > 10) {
+        if (option->debug == TRUE) {
+            if (option->searchstr_len > 10) {
                 g_printerr("str: %.10s...\n", str);
             } else {
                 g_printerr("str: %s\n", str);
             }
         }
         poor_search_ret[i] = TIME(
-            for(j = 0;j < option.search_num;j++){
+            for(j = 0;j < option->search_num;j++){
                 poor_pos[j] = poor_search(str, keys[j]);
             });
-        poor_search_ret[i] /= option.search_num;
+        poor_search_ret[i] /= option->search_num;
         
         sauto_index_ret[i]  = TIME(sauto = sauto_new(str));
         sauto_search_ret[i] = TIME(
-            for(j = 0;j < option.search_num;j++){
+            for(j = 0;j < option->search_num;j++){
                 sauto_pos[j] = sauto_search(sauto, keys[j]);
             });
-        sauto_search_ret[i] /= option.search_num;
+        sauto_search_ret[i] /= option->search_num;
 
         sarray_index_ret[i]  = TIME(sarray = sarray_new(str));
         sarray_search_ret[i] = TIME(
-            for(j = 0;j < option.search_num;j++){
+            for(j = 0;j < option->search_num;j++){
                 sarray_pos[j] = sarray_search(sarray, keys[j]);
             });
-        sarray_search_ret[i] /= option.search_num;
+        sarray_search_ret[i] /= option->search_num;
 
 
         sauto_delete(sauto);
         sarray_delete(sarray);
         g_free((gpointer) str);
-        for(j = 0;j < option.search_num;j++){
+        for(j = 0;j < option->search_num;j++){
             g_free((gpointer) keys[j]);
-            if (!(option.existing_key == FALSE || poor_pos >= 0)){
+            if (!(option->existing_key == FALSE || poor_pos >= 0)){
                 g_printerr("Search failed\n");
                 abort();
             }
@@ -287,17 +279,17 @@ main(gint argc, gchar **argv)
     
     g_print("%d\t%d\t%le\t%le\t%le\t%le\t%le\t%le\t%le\t%le\t%le\t%le\t"
             "\n",
-            option.searchstr_len, option.keystr_len,
-            average(poor_search_ret, option.trial_num),
-            error  (poor_search_ret, option.trial_num),
-            average(sauto_index_ret, option.trial_num),
-            error  (sauto_index_ret, option.trial_num),
-            average(sauto_search_ret, option.trial_num),
-            error  (sauto_search_ret, option.trial_num),
-            average(sarray_index_ret, option.trial_num),
-            error  (sarray_index_ret, option.trial_num),
-            average(sarray_search_ret, option.trial_num),
-            error  (sarray_search_ret, option.trial_num)
+            option->searchstr_len, option->keystr_len,
+            average(poor_search_ret, option->trial_num),
+            error  (poor_search_ret, option->trial_num),
+            average(sauto_index_ret, option->trial_num),
+            error  (sauto_index_ret, option->trial_num),
+            average(sauto_search_ret, option->trial_num),
+            error  (sauto_search_ret, option->trial_num),
+            average(sarray_index_ret, option->trial_num),
+            error  (sarray_index_ret, option->trial_num),
+            average(sarray_search_ret, option->trial_num),
+            error  (sarray_search_ret, option->trial_num)
         );
 
     g_free(poor_search_ret);
@@ -305,6 +297,124 @@ main(gint argc, gchar **argv)
     g_free(sauto_search_ret);
     g_free(sarray_index_ret);
     g_free(sarray_search_ret);
+}
+
+void
+action_check_size(option_t *option)
+{
+    sauto_t *sauto;
+    sarray_t *sarray;
+    gint i;
+
+    gdouble *sauto_size_ret;
+    gdouble *sarray_size_ret;
+
+    const gchar *str;
+
+    sauto_size_ret = g_malloc(sizeof(gdouble) * option->trial_num);
+    sarray_size_ret = g_malloc(sizeof(gdouble) * option->trial_num);
+    
+    if (option->verbose == TRUE) {
+        g_print("# "
+                "searchstr_len\t"
+                "sauto_size(byte)\t"
+                "sarray_size(byte)\t"
+                "sauto_size_ratio\t"
+                "sarray_size_ratio\t"
+                "\n");
+    }
+
+    for(i = 0;i < option->trial_num;i++) {
+        str = generate_string(option->searchstr_len);
+        sauto = sauto_new(str);
+        sarray = sarray_new(str);
+
+        sauto_size_ret[i] = sauto_size(sauto);
+        sarray_size_ret[i] = sarray_size(sarray);
+
+        sauto_delete(sauto);
+        sarray_delete(sarray);
+    }
+
+    g_print("%d\t%le\t%le\t%le\t%le\n",
+            option->searchstr_len,
+            average(sauto_size_ret, option->trial_num),
+            average(sarray_size_ret, option->trial_num),
+            average(sauto_size_ret, option->trial_num)
+            / (sizeof(gchar) * option->searchstr_len),
+            average(sarray_size_ret, option->trial_num)
+            / (sizeof(gchar) * option->searchstr_len));
+
+    g_free(sauto_size_ret);
+    g_free(sarray_size_ret);
+}
+
+void
+action_check_tran(option_t *option)
+{
+    sauto_t *sauto;
+    gint i;
+
+    gdouble *sauto_tran_ret;
+
+    const gchar *str;
+
+    sauto_tran_ret = g_malloc(sizeof(gdouble) * option->trial_num);
+    
+    if (option->verbose == TRUE) {
+        g_print("# "
+                "searchstr_len\t"
+                "sauto_avg_tran\t"
+                "\n");
+    }
+
+    for(i = 0;i < option->trial_num;i++) {
+        str = generate_string(option->searchstr_len);
+        sauto = sauto_new(str);
+        sauto_tran_ret[i] = sauto_avg_tran(sauto);
+        sauto_delete(sauto);
+    }
+
+    g_print("%d\t%le\n",
+            option->searchstr_len,
+            average(sauto_tran_ret, option->trial_num));
+
+    g_free(sauto_tran_ret);
+}
+
+gint
+main(gint argc, gchar **argv)
+{
+    option_t option;
+
+    parse_args(argc, argv, &option);
+    init_gen_rand(option.seed);
+    srand(option.seed);
+
+    randnums_size = option.searchstr_len;
+    if (option.keystr_len > randnums_size) {
+        return 0;
+    }
+    randnums_size += (4 - randnums_size % 4);
+    g_assert(randnums_size >= option.searchstr_len);
+    if (0 != posix_memalign((gpointer *)&randnums,
+                            16, sizeof(guint32) * randnums_size)) {
+        perror("cannot allocate memory");
+        exit(errno);
+    }
+
+    switch(option.action){
+    case SEARCH:
+        action_search(&option);
+        break;
+    case CHECK_SIZE:
+        action_check_size(&option);
+        break;
+    case CHECK_TRAN:
+        action_check_tran(&option);
+        break;
+    }
+
     free(randnums);
 
     return 0;
