@@ -35,7 +35,7 @@ def main(argv)
               end
 
   searchstr_len_set = (10..24).map{|pow| 1 << pow}
-  keystr_len = 8
+  keystr_len = 32
   data_file.puts(`#{opt[:command]} -v -n 0`.split("\n").first) # print labels
   searchstr_len_set.each do |len|
     command = "#{opt[:command]} -n #{len} -m #{keystr_len}"
@@ -51,7 +51,7 @@ def main(argv)
 
   # ensure key existence
   searchstr_len_set = (10..24).map{|pow| 1 << pow}
-  keystr_len = 8
+  keystr_len = 32
   data_file.puts(`#{opt[:command]} -v -n 0`.split("\n").first) # print labels
   searchstr_len_set.each do |len|
     command = "#{opt[:command]} -e -n #{len} -m #{keystr_len}"
