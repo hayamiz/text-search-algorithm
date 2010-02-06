@@ -68,7 +68,7 @@ parse_args(int argc, char **argv, option_t *option)
     // default values
     option->trial_num = 10;
     option->search_num = 1000;
-    option->keystr_len = 8;
+    option->keystr_len = 32;
     option->searchstr_len = 1024;
     option->seed = time(NULL);
     option->existing_key = FALSE;
@@ -124,7 +124,7 @@ print_help(void)
     g_print("Usage: text-search [options]\n\
 \n\
 Options:\n\
-	-m NUM		Length of key string (default: 8)\n\
+	-m NUM		Length of key string (default: 32)\n\
 	-n NUM		Length of search target string (default: 1024)\n\
 	-e		Constraint: search for existing key\n\
 	-t		The number of trial runs for each algorithm (deafult: 10)\n\
