@@ -216,3 +216,35 @@ sauto_graphviz(FILE *out, sauto_t *sauto)
     }
     fprintf(out, "}\n");
 }
+
+gint
+sauto_size(sauto_t *sauto)
+{
+    gint ret;
+    gint i;
+
+    ret = sizeof(sauto_t);
+    ret += (sizeof(sauto_state_t *) + sizeof(sauto_state_t))
+        * sauto->num_states;
+    for(i = 0;i < sauto->num_states;i++){
+        ret += (sizeof(sauto_tran_t *) + sizeof(sauto_tran_t))
+            * sauto->states[i]->num_children;
+    }
+
+    return ret;
+}
+
+gdouble
+sauto_avg_tran(sauto_t *sauto)
+{
+    gdouble ret;
+    gint i;
+
+    ret = 0;
+    for(i = 0;i < sauto->num_states;i++){
+        ret += sauto->states[i]->num_children;
+    }
+    ret /= sauto->num_states;
+
+    return ret;
+}

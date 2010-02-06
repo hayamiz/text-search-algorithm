@@ -148,4 +148,14 @@ sarray_search(sarray_t *sarray, const gchar *key)
     return -1;
 }
 
+gint
+sarray_size(sarray_t *sarray)
+{
+    gint ret;
+    ret = sizeof(sarray_t);
+    ret += sizeof(gchar *) * sarray->str_len;
+
+    return ret;
+}
+
 

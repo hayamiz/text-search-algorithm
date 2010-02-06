@@ -61,13 +61,19 @@ plot '#{datafile}' index 2 using 2:7 ti "Suffix Automaton(random)" with lp ls 1,
      '#{datafile}' index 2 using 2:11 ti "Suffix Array(random)" with lp ls 3, \
      '#{datafile}' index 3 using 2:11 ti "Suffix Array(existing)" with lp ls 4
 
+set logscale x
+set logscale y
+set output "suffix-searchtime-keylength-fast.eps"
+plot '#{datafile}' index 2 using 2:7 ti "Suffix Automaton(random)" with lp ls 1, \
+     '#{datafile}' index 2 using 2:11 ti "Suffix Array(random)" with lp ls 3, \
+     '#{datafile}' index 3 using 2:11 ti "Suffix Array(existing)" with lp ls 4
+
 set xlabel "Length of targeted strings [bytes]"
 set ylabel "Index construction time [sec]"
 
 set output "suffix-indextime-targetedlength.eps"
 plot '#{datafile}' index 0 using 1:5 ti "Suffix Automaton" with lp, \
      '#{datafile}' index 0 using 1:9 ti "Suffix Array" with lp
-
 EOS
   scriptfile = Tempfile.new("gp")
   scriptfile.puts script
