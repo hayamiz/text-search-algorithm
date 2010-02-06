@@ -7,7 +7,7 @@
             gdouble _t;                         \
             _timer = g_timer_new();             \
             g_timer_start(_timer);              \
-            (stmt);                             \
+            stmt;                               \
             g_timer_stop(_timer);               \
             _t = g_timer_elapsed(_timer, NULL); \
             g_timer_destroy(_timer);            \
@@ -67,6 +67,7 @@ parse_args(int argc, char **argv, option_t *option)
 {
     // default values
     option->trial_num = 10;
+    option->search_num = 1000;
     option->keystr_len = 8;
     option->searchstr_len = 1024;
     option->seed = time(NULL);
@@ -75,10 +76,13 @@ parse_args(int argc, char **argv, option_t *option)
     option->debug = FALSE;
 
     char c;
-    while((c = getopt(argc, argv, "ht:m:n:evs:")) != -1) {
+    while((c = getopt(argc, argv, "ht:T:m:n:evs:")) != -1) {
         switch(c) {
         case 't':
             option->trial_num = atoi(optarg);
+            break;
+        case 'T':
+            option->search_num = atoi(optarg);
             break;
         case 's':
             option->seed = atoi(optarg);
@@ -124,6 +128,7 @@ Options:\n\
 	-n NUM		Length of search target string (default: 1024)\n\
 	-e		Constraint: search for existing key\n\
 	-t		The number of trial runs for each algorithm (deafult: 10)\n\
+	-T		The number of searches for each trial (deafult: 1000)\n\
 	-s		Seed of random number generator\n\
 	-v		Verbose (show labels for each column of results)\n\
 	-d		Debug print\n\
@@ -168,8 +173,8 @@ main(gint argc, gchar **argv)
 {
     option_t option;
     const gchar *str;
-    const gchar *key;
     gint i;
+    gint j;
 
     gdouble *poor_search_ret;
     gdouble *sauto_index_ret;
@@ -180,9 +185,10 @@ main(gint argc, gchar **argv)
     sauto_t *sauto;
     sarray_t *sarray;
 
-    gint poor_pos;
-    gint sauto_pos;
-    gint sarray_pos;
+    const gchar **keys;
+    gint         *poor_pos;
+    gint         *sauto_pos;
+    gint         *sarray_pos;
 
     parse_args(argc, argv, &option);
     init_gen_rand(option.seed);
@@ -223,40 +229,63 @@ main(gint argc, gchar **argv)
     sarray_index_ret  = g_malloc(sizeof(gdouble) * option.trial_num);
     sarray_search_ret = g_malloc(sizeof(gdouble) * option.trial_num);
 
+    keys = g_malloc(sizeof(gchar *) * option.search_num);
+    poor_pos = g_malloc(sizeof(gint) * option.search_num);
+    sauto_pos = g_malloc(sizeof(gint) * option.search_num);
+    sarray_pos = g_malloc(sizeof(gint) * option.search_num);
+
     for(i = 0;i < option.trial_num;i++) {
         str = generate_string(option.searchstr_len);
-        key = generate_key((option.existing_key == TRUE?
-                            str : NULL),
-                           option.keystr_len);
+        for(j = 0;j < option.search_num;j++){
+            keys[j] = generate_key((option.existing_key == TRUE?
+                                    str : NULL),
+                                   option.keystr_len);
+        }
         if (option.debug == TRUE) {
             if (option.searchstr_len > 10) {
                 g_printerr("str: %.10s...\n", str);
             } else {
                 g_printerr("str: %s\n", str);
             }
-            if (option.keystr_len > 10) {
-                g_printerr("key: %.10s...\n", key);
-            } else {
-                g_printerr("key: %s\n", key);
-            }
         }
-        poor_search_ret[i]  = TIME(poor_pos = poor_search(str, key));
-        sauto_index_ret[i]  = TIME(sauto = sauto_new(str));
-        sauto_search_ret[i] = TIME(sauto_pos = sauto_search(sauto, key));
-        sarray_index_ret[i]  = TIME(sarray = sarray_new(str));
-        sarray_search_ret[i] = TIME(sarray_pos = sarray_search(sarray, key));
-
-        g_assert(poor_pos == sauto_pos);
-        g_assert(poor_pos == sarray_pos);
-        g_assert(option.existing_key == FALSE || poor_pos >= 0);
+        poor_search_ret[i] = TIME(
+            for(j = 0;j < option.search_num;j++){
+                poor_pos[j] = poor_search(str, keys[j]);
+            });
+        poor_search_ret[i] /= option.search_num;
         
+        sauto_index_ret[i]  = TIME(sauto = sauto_new(str));
+        sauto_search_ret[i] = TIME(
+            for(j = 0;j < option.search_num;j++){
+                sauto_pos[j] = sauto_search(sauto, keys[j]);
+            });
+        sauto_search_ret[i] /= option.search_num;
+
+        sarray_index_ret[i]  = TIME(sarray = sarray_new(str));
+        sarray_search_ret[i] = TIME(
+            for(j = 0;j < option.search_num;j++){
+                sarray_pos[j] = sarray_search(sarray, keys[j]);
+            });
+        sarray_search_ret[i] /= option.search_num;
+
+
         sauto_delete(sauto);
         sarray_delete(sarray);
         g_free((gpointer) str);
-        g_free((gpointer) key);
+        for(j = 0;j < option.search_num;j++){
+            g_free((gpointer) keys[j]);
+            if (!(option.existing_key == FALSE || poor_pos >= 0)){
+                g_printerr("Search failed\n");
+                abort();
+            }
+            if (!(poor_pos[j] == sauto_pos[j] || poor_pos[j] == sarray_pos[j])){
+                g_printerr("Result mismatch\n");
+                abort();
+            }
+        }
     }
     
-    g_print("%d\t%d\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t"
+    g_print("%d\t%d\t%le\t%le\t%le\t%le\t%le\t%le\t%le\t%le\t%le\t%le\t"
             "\n",
             option.searchstr_len, option.keystr_len,
             average(poor_search_ret, option.trial_num),

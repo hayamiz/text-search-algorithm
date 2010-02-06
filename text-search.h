@@ -15,6 +15,7 @@
 
 typedef struct option_rec {
     gint trial_num;
+    gint search_num;
     gint keystr_len;
     gint searchstr_len;
     gint seed;
