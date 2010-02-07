@@ -399,6 +399,10 @@ action_check_tran_hist(option_t *option)
     gint *sauto20_hist;
     gint *sauto22_hist;
 
+    gint sauto10_total;
+    gint sauto20_total;
+    gint sauto22_total;
+
     const gchar *str;
 
     free(randnums);
@@ -411,27 +415,34 @@ action_check_tran_hist(option_t *option)
 
     if (option->verbose == TRUE) {
         g_print("# tran_num\tcount(N=2**10)\tcount(N=2**20)\tcount(N=2**22)"
+                "\tfreq(N=2**10)\tfreq(N=2**20)\tfreq(N=2**22)"
                 "\n");
     }
 
     str = generate_string(1 << 10);
     sauto = sauto_new(str);
+    sauto10_total = sauto->num_states;
     sauto10_hist = sauto_tran_hist(sauto);
     sauto_delete(sauto);
     
     str = generate_string(1 << 20);
     sauto = sauto_new(str);
+    sauto20_total = sauto->num_states;
     sauto20_hist = sauto_tran_hist(sauto);
     sauto_delete(sauto);
     
     str = generate_string(1 << 22);
     sauto = sauto_new(str);
+    sauto22_total = sauto->num_states;
     sauto22_hist = sauto_tran_hist(sauto);
     sauto_delete(sauto);
 
     for(i = 1;i < 129;i++){
-        g_print("%d\t%d\t%d\t%d\n",
-                i, sauto10_hist[i], sauto20_hist[i], sauto22_hist[i]);
+        g_print("%d\t%d\t%d\t%d\t%le\t%le\t%le\n",
+                i, sauto10_hist[i], sauto20_hist[i], sauto22_hist[i],
+                (gdouble)sauto10_hist[i] / sauto10_total,
+                (gdouble)sauto20_hist[i] / sauto20_total,
+                (gdouble)sauto22_hist[i] / sauto22_total);
     }
 
     g_free(sauto10_hist);

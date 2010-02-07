@@ -74,7 +74,7 @@ plot '#{datafile}' index 0 using 1:5 ti "Suffix Automaton" with lp, \
 
 set xlabel "Length of targeted strings [bytes]"
 set ylabel "Data structure size / string size"
-set yrange [0:90]
+set yrange [0:140]
 set output "suffix-size.eps"
 plot '#{datafile}' index 4 using 1:4 ti "Suffix Automaton(ratio)" with lp, \
      '#{datafile}' index 4 using 1:5 ti "Suffix Array(ratio)" with lp
@@ -84,6 +84,18 @@ set ylabel "Average # of next states"
 set yrange [0:3]
 set output "suffix-automaton-trans.eps"
 plot '#{datafile}' index 5 using 1:2 ti "Suffix Automaton" with lp
+
+set key right top
+set xrange [0:27]
+set yrange [1:10000000]
+set logscale y
+set xlabel "# of next states"
+set ylabel "Frequency"
+set boxwidth 0.2
+set output "suffix-automaton-tran-hist.eps"
+plot '#{datafile}' ind 6 usi ($1-.25):2 ti "N=2**10" with imp lw 10 lt 1 lc 1, \
+     '#{datafile}' ind 6 usi        1:3 ti "N=2**20" with imp lw 10 lt 1 lc 2, \
+     '#{datafile}' ind 6 usi ($1+.25):4 ti "N=2**22" with imp lw 10 lt 1 lc 3
 EOS
   scriptfile = Tempfile.new("gp")
   scriptfile.puts script
